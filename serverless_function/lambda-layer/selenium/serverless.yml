@@ -1,0 +1,12 @@
+service: selenium-layer
+
+provider:
+  name: aws
+  region: ap-northeast-1
+
+layers:
+  selenium:
+    path: python
+    description: selenium in amazon-linux installed
+    compatibleRuntimes:
+      - python3.6

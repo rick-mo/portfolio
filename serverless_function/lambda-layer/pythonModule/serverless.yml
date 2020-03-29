@@ -1,0 +1,12 @@
+service: python-module-layer
+
+provider:
+  name: aws
+  region: ap-northeast-1
+
+layers:
+  pythonModule:
+    path: python
+    description: beautifulsoup4, boto3, requests_oauthlib, requests
+    compatibleRuntimes:
+      - python3.6

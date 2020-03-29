@@ -1,0 +1,33 @@
+service: portfolio
+
+provider:
+  name: aws
+  runtime: python3.6
+  region: ap-northeast-1
+  timeout: 60
+  stage: production
+  memorySize: 256
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - "dynamodb:*"
+      Resource: "arn:aws:dynamodb:ap-northeast-1:197952095391:table/manage_money"
+
+custom: ${file(./env.yml)}
+
+functions:
+  saveCash:
+    handler: handler.main
+    environment:
+      access_token: ${self:custom.access_token}
+      access_token_secret: ${self:custom.access_token_secret}
+      consumer_id: ${self:custom.consumer_id}
+      consumer_secret: ${self:custom.consumer_secret}
+      zaim_login_id: ${self:custom.zaim_login_id}
+      zaim_password: ${self:custom.zaim_password}
+    layers:
+      - arn:aws:lambda:ap-northeast-1:197952095391:layer:headless:4
+      - arn:aws:lambda:ap-northeast-1:197952095391:layer:python_module:4
+      - arn:aws:lambda:ap-northeast-1:197952095391:layer:selenium:2
+    events:
+      - schedule: cron(0 19 * * ? *)

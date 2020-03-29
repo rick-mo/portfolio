@@ -1,0 +1,12 @@
+service: headless-layer
+
+provider:
+  name: aws
+  region: ap-northeast-1
+
+layers:
+  headless:
+    path: bin
+    description: chromedriver and headless-chromium
+    compatibleRuntimes:
+      - python3.6
