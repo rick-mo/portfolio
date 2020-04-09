@@ -42,6 +42,10 @@ functions:
       - arn:aws:lambda:ap-northeast-1:197952095391:layer:python_module:4
     events:
       - schedule: cron(0 19 * * ? *)
+  saveFund:
+    handler: saveFund.main
+    layers:
+      - arn:aws:lambda:ap-northeast-1:197952095391:layer:python_module:4
   postPortfolio:
     handler: postPortfolio.main
     environment:
