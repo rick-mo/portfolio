@@ -11,13 +11,13 @@ provider:
     - Effect: Allow
       Action:
         - "dynamodb:*"
-      Resource: "arn:aws:dynamodb:ap-northeast-1:197952095391:table/manage_money"
+      Resource: "arn:aws:dynamodb:ap-northeast-1:197952095391:table/my_portfolio"
 
 custom: ${file(../env.yml)}
 
 functions:
   saveCash:
-    handler: saveCash.main
+    handler: save_cash.main
     environment:
       access_token: ${self:custom.access_token}
       access_token_secret: ${self:custom.access_token_secret}
@@ -32,7 +32,7 @@ functions:
     events:
       - schedule: cron(0 19 * * ? *)
   saveInsurance:
-    handler: saveInsurance.main
+    handler: save_insurance.main
     environment:
       access_token: ${self:custom.access_token}
       access_token_secret: ${self:custom.access_token_secret}
@@ -43,11 +43,19 @@ functions:
     events:
       - schedule: cron(0 19 * * ? *)
   saveFund:
-    handler: saveFund.main
+    handler: save_fund.main
     layers:
       - arn:aws:lambda:ap-northeast-1:197952095391:layer:python_module:4
+  saveCryptoCurrency:
+    handler: save_crypto_currency.main
+    environment:
+      coinmarketcap_api_key: ${self:custom.coinmarketcap_api_key}
+    layers:
+      - arn:aws:lambda:ap-northeast-1:197952095391:layer:python_module:4
+    events:
+      - schedule: cron(0 19 * * ? *)
   postPortfolio:
-    handler: postPortfolio.main
+    handler: post_portfolio.main
     environment:
       slack_webhook: ${self:custom.slack_webhook}
     layers:

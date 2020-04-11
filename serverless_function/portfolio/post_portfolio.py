@@ -6,10 +6,10 @@ from datetime import datetime
 from decimal import Decimal
 
 dynamodb = boto3.resource('dynamodb')
-table = dynamodb.Table('manage_money')
+table = dynamodb.Table('my_portfolio')
 
 def generate_total_cash_and_msg():
-  cash_list = table.get_item(Key={'asset': 'cash'})['Item']['history']
+  cash_list = table.get_item(Key={'asset_type': 'cash'})['Item']['history']
   current_month = datetime.strftime(datetime.today(), '%Y%m')
 
   total_cash = 0
@@ -27,7 +27,7 @@ def generate_total_cash_and_msg():
   return [total_cash, cash_msg]
 
 def generate_total_insurance_and_msg():
-  insurance_list = table.get_item(Key={'asset': 'insurance'})['Item']['history']
+  insurance_list = table.get_item(Key={'asset_type': 'insurance'})['Item']['history']
 
   total_insurance_payment = 0
   total_insurance_doller = 0
@@ -56,18 +56,16 @@ def generate_total_insurance_and_msg():
   return [total_insurance_yen, insurance_msg]
 
 def generate_total_fund_and_msg():
-  fund_list = table.get_item(Key={'asset': 'fund'})['Item']['history']
+  fund_list = table.get_item(Key={'asset_type': 'fund'})['Item']['history']
   # 支払合計
   pay_amount_sum = sum([x['pay_amount'] for x in fund_list])
   # 保有数量合計
   contract_quantity_sum = sum([x['contract_quantity'] for x in fund_list])
   # 平均取得単価
   avg_standard_price = int(pay_amount_sum / contract_quantity_sum * 10000)
-
   # 現在の基準価額
   res = requests.get('https://emaxis.jp/web/api/v1.php?col=asset_default&fd=253266').json()
   current_standard_price = Decimal(res['standard_price'])
-
   # 時価評価額合計
   total_fund = int(contract_quantity_sum * current_standard_price / 10000)
 
@@ -84,6 +82,38 @@ def generate_total_fund_and_msg():
   )
 
   return [total_fund, fund_msg]
+
+def generate_total_crypto_and_msg():
+  crypto_asset = table.get_item(Key={'asset_type': 'crypto_currency'})['Item']['current_asset']
+
+  total_crypto = crypto_asset['amount_jpy_sum']
+
+  crypto_msg_list =[]
+
+  crypto_title_msg = '''【暗号通貨】
+  '''
+  crypto_msg_list.append(crypto_title_msg)
+
+  for coin in crypto_asset['current_asset_list']:
+    coin_msg = '''・{}
+    時価評価額:{:,}円
+    '''.format(
+      coin['symbol'],
+      coin['amount_conversion_jpy']
+    )
+    crypto_msg_list.append(coin_msg)
+
+  crypto_sum_msg = '''暗号資産合計(BTC): {:,}BTC
+    暗号資産合計(JPY): {:,}円(換算値)
+  '''.format(
+    crypto_asset['amount_btc_sum'],
+    total_crypto,
+  )
+  crypto_msg_list.append(crypto_sum_msg)
+  crypto_msg = ''.join(crypto_msg_list)
+
+  return [total_crypto, crypto_msg]
+
 
 def main(event, context):
   webhook_url = os.environ['slack_webhook']
@@ -102,12 +132,15 @@ def main(event, context):
   # 投資信託
   total_fund, fund_msg = generate_total_fund_and_msg()
 
+  # 暗号通貨
+  total_crypto, crypto_msg = generate_total_crypto_and_msg()
+
   # 総資産
-  total_assets = total_cash + total_insurance_yen + total_fund
+  total_assets = total_cash + total_insurance_yen + total_fund + total_crypto
   total_assets_msg = '''*総資産額: {:,}円*
   '''.format(total_assets)
 
-  asset_msg = ''.join([title_msg, cash_msg, insurance_msg, fund_msg, total_assets_msg])
+  asset_msg = ''.join([title_msg, cash_msg, insurance_msg, fund_msg, crypto_msg, total_assets_msg])
 
   send_msg = {
     'username': '資産状況通知bot',

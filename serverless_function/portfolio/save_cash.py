@@ -12,7 +12,7 @@ import os
 import json
 
 dynamodb = boto3.resource('dynamodb')
-table = dynamodb.Table('manage_money')
+table = dynamodb.Table('my_portfolio')
 
 def get_total_cash():
   """
@@ -136,7 +136,7 @@ def main(event, context):
   # dynamoDBへ保存
   table.put_item(
     Item = {
-      'asset': 'cash',
+      'asset_type': 'cash',
       'history': cash_list,
       'save_date': datetime.today().strftime('%Y%m%d')
     }

@@ -37,10 +37,10 @@ def main(event, context):
   insurance_list = get_payment_insurance()
 
   dynamodb = boto3.resource('dynamodb')
-  table = dynamodb.Table('manage_money')
+  table = dynamodb.Table('my_portfolio')
   table.put_item(
     Item = {
-      'asset': 'insurance',
+      'asset_type': 'insurance',
       'history': insurance_list,
       'save_date': datetime.today().strftime('%Y%m%d')
     }
