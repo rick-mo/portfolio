@@ -21,7 +21,6 @@ def get_current_price_json(symbol, convert):
   try:
     response = requests.get(url, headers=headers, params=params)
   except (Timeout, ConnectionError, TooManyRedirects) as e:
-    print(e)
     raise e
   
   current_price_json = json.loads(response.text, parse_float=Decimal)['data']
@@ -83,5 +82,9 @@ def main(event, context):
       }
     )
   except Exception as e:
-    print(e)
     raise e
+
+  return {
+    'statusCode': 200,
+    'body': 'ok'
+  }

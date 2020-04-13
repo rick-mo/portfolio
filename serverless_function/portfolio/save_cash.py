@@ -2,6 +2,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from requests_oauthlib import OAuth1
 import requests
+from requests import Timeout, ConnectionError, TooManyRedirects
 from urllib.parse import parse_qsl
 from time import sleep
 from bs4 import BeautifulSoup
@@ -60,11 +61,15 @@ def get_cash_history():
   access_token = os.environ['access_token']
   access_token_secret = os.environ['access_token_secret']
 
-  input_money = 'https://api.zaim.net/v2/home/money'
+  url = 'https://api.zaim.net/v2/home/money'
 
   auth = OAuth1(consumer_id, consumer_secret, access_token, access_token_secret)
 
-  res = requests.get(input_money, auth=auth).json()
+  try:
+    res = requests.get(url, auth=auth).json()
+  except (Timeout, ConnectionError, TooManyRedirects) as e:
+    raise e
+
   return res['money']
 
 def get_month_list():
@@ -134,10 +139,19 @@ def main(event, context):
   cash_list = get_cash_list(cash_history, total_cash)
 
   # dynamoDBへ保存
-  table.put_item(
-    Item = {
-      'asset_type': 'cash',
-      'history': cash_list,
-      'save_date': datetime.today().strftime('%Y%m%d')
-    }
-  )
+  try:
+    # cashには時価の概念がないため、current_assetは設定しない。
+    table.put_item(
+      Item = {
+        'asset_type': 'cash',
+        'history': cash_list,
+        'save_date': datetime.today().strftime('%Y%m%d')
+      }
+    )
+  except Exception as e:
+    raise e
+
+  return {
+    'statusCode': 200,
+    'body': 'ok'
+  }
